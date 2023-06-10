@@ -49,6 +49,7 @@ UNTIL SHIP:LIQUIDFUEL < 0.01 {  // Until fuel runs out
     LOCK THROTTLE TO throttle_setting.
     SET error_prior_alt TO error_alt.
 
+
     // Pitch PID
     LOCK STEERING TO UP.
     
@@ -56,5 +57,5 @@ UNTIL SHIP:LIQUIDFUEL < 0.01 {  // Until fuel runs out
     WAIT 0.01.
 }
 
-PRINT "Fuel exhausted. Cut-off.".
+PRINT "Fuel exhausted. Cut-off....".
 LOCK THROTTLE TO 0.  // Cut-off the engine
