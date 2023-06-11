@@ -1,4 +1,4 @@
-SET TARGET_ALTITUDE TO 200000.
+SET TARGET_ALTITUDE TO 100000.
 SET FUEL TO 7830.
 
 // Altitude PID Constants
@@ -13,6 +13,19 @@ SET integral_alt TO 0.
 // Initialize the time
 SET t0 TO TIME:SECONDS.
 
+// Get KSC coordinates
+SET KSC TO LATLNG(-0.0972, -74.5577). 
+
+// // Define function to get direction towards KSC launch pad
+// FUNCTION LAUNCHPAD_DIRECTION {
+//   PARAMETER pitch_angle.
+//   LOCAL landing_direction IS HEADING(ANGLE_BETWEEN(SHIP:UP:VECTOR, KSC:POSITION), 0).
+//   RETURN HEADING(landing_direction, pitch_angle).
+// }
+
+// // Lock steering to launchpad direction
+// LOCK STEERING TO LAUNCHPAD_DIRECTION(80).  
+
 LOCK THROTTLE TO 1. 
 STAGE.    
 LOCK STEERING TO UP.          
@@ -22,11 +35,11 @@ PRINT (SHIP:LIQUIDFUEL).
 
 WAIT UNTIL apoapsis > (TARGET_ALTITUDE). 
 
-LOCK THROTTLE TO 0.05. 
+LOCK THROTTLE TO 0. 
 
-WAIT UNTIL ALT:RADAR > (TARGET_ALTITUDE). 
+WAIT UNTIL ALT:RADAR > (TARGET_ALTITUDE-10000). 
 
-SET HOVER_ALTITUDE TO 200000.
+SET HOVER_ALTITUDE TO 100000.
 
 PRINT "Entering PID loop for altitude hold.".
 
@@ -51,7 +64,7 @@ UNTIL (SHIP:LIQUIDFUEL/FUEL) < 0.30 {
 
     rcs on.
     // Pitch PID
-    LOCK STEERING TO UP.
+    LOCK STEERING TO UP.  
     
     SET t0 TO TIME:SECONDS.
     WAIT 0.01.
@@ -88,19 +101,27 @@ UNTIL SHIP:airspeed < 5 AND ALT:RADAR < 50 {
         LOCK THROTTLE TO 0.  // Cut engines if we're not there yet
     }
 
-    IF ALT:RADAR < 1000 {
+    IF ALT:RADAR < 1200 {
         GEAR ON.
     } ELSE {
         GEAR OFF.
     }
 
-    IF ALT:RADAR < 6000 {
+    IF ALT:RADAR < 20000 {
         BRAKES ON.
     } ELSE {
         BRAKES OFF.
     }
 
-    LOCK STEERING TO UP.
+    IF SHIP:airspeed > 1000 {
+        LOCK THROTTLE TO 0.5.
+    } 
+
+    IF ALT:RADAR > 2000 {
+        LOCK STEERING TO LAUNCHPAD_DIRECTION(80). 
+    } ELSE {
+        LOCK STEERING TO UP. 
+    }
 
     SET t0 TO TIME:SECONDS.
     WAIT 0.01.
