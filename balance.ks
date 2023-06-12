@@ -28,6 +28,7 @@ GEAR OFF.
 PRINT (SHIP:LIQUIDFUEL).
 
 WAIT UNTIL apoapsis > (TARGET_ALTITUDE + 5000). 
+rcs on.
 
 LOCK THROTTLE TO 0. 
 
@@ -75,7 +76,7 @@ LOCK THROTTLE TO 0.  // Cut engines for descent
 LOCK STEERING TO UP.
 
 // Main descent loop. Suicide burn.
-UNTIL SHIP:airspeed < 8 AND ALT:RADAR < 50 {
+UNTIL SHIP:airspeed < 6 AND ALT:RADAR < 50 {
     
     BRAKES ON.
     rcs on.
@@ -95,18 +96,15 @@ UNTIL SHIP:airspeed < 8 AND ALT:RADAR < 50 {
 
     IF ALT:RADAR <= (dist_stop + 10) {  // start burn at calculated altitude + safety buffer
         LOCK THROTTLE TO 1.  // Full throttle for hoverslam
-        if SHIP:AIRSPEED < 10 {
-            LOCK STEERING TO SHIP:SRFRETROGRADE.
-        } ELSE {
-            LOCK STEERING TO UP.
-        }
     } ELSE {
         LOCK THROTTLE TO 0.
-        if SHIP:AIRSPEED < 10 {
-            LOCK STEERING TO SHIP:SRFRETROGRADE.
-        } ELSE {
-            LOCK STEERING TO UP.
-        }    }
+    }
+    
+    IF ALT:RADAR > 10 and SHIP:AIRSPEED > 20 {
+        LOCK STEERING TO SHIP:SRFRETROGRADE.
+    } ELSE {
+        LOCK STEERING TO UP.
+    }
 
     IF ALT:RADAR < 1300 {
         GEAR ON.
@@ -114,7 +112,7 @@ UNTIL SHIP:airspeed < 8 AND ALT:RADAR < 50 {
         GEAR OFF.
     }
 
-    IF SHIP:airspeed > 1300 and ALT:RADAR <= 50000 {
+    IF SHIP:airspeed > 1400 and ALT:RADAR <= 40000 {
         LOCK THROTTLE TO 0.1.
     } 
 
