@@ -12,6 +12,10 @@ SET integral TO LIST(0, 0, 0, 0).
 
 WAIT 0.01. // Avoid division by zero error on first loop
 
+stage. 
+
+LOCK THROTTLE TO 1. // Start engines
+
 // Initialize the time
 SET t0 TO TIME:SECONDS.
 
@@ -60,14 +64,31 @@ UNTIL ABORT {
         }
         
         // Toggle action group for engine on/off depending on throttle setting
-        IF throttle_setting > 0.5 {
-            AG(idx+1, true). // Enable action group (idx+1 because AG0 is not valid)
-        }.
-        ELSE {
-            AG(idx+1, false). // Disable action group
-        }.
-
-
+        IF idx = 0 {
+            IF throttle_setting > 0.5 {
+                AG1 ON.
+            } ELSE {
+                AG1 OFF.
+            }
+        } ELSE IF idx = 1 {
+            IF throttle_setting > 0.5 {
+                AG2 ON.
+            } ELSE {
+                AG2 OFF.
+            }
+        } ELSE IF idx = 2 {
+            IF throttle_setting > 0.5 {
+                AG3 ON.
+            } ELSE {
+                AG3 OFF.
+            }
+        } ELSE IF idx = 3 {
+            IF throttle_setting > 0.5 {
+                AG4 ON.
+            } ELSE {
+                AG4 OFF.
+            }
+        }
     }
 
     SET t0 TO TIME:SECONDS.

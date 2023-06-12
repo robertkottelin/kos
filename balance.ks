@@ -76,7 +76,7 @@ LOCK THROTTLE TO 0.  // Cut engines for descent
 LOCK STEERING TO UP.
 
 // Main descent loop. Suicide burn.
-UNTIL SHIP:airspeed < 6 AND ALT:RADAR < 50 {
+UNTIL SHIP:airspeed < 10 AND ALT:RADAR < 50 {
     
     BRAKES ON.
     rcs on.
@@ -100,7 +100,7 @@ UNTIL SHIP:airspeed < 6 AND ALT:RADAR < 50 {
         LOCK THROTTLE TO 0.
     }
     
-    IF ALT:RADAR > 10 and SHIP:AIRSPEED > 20 {
+    IF ALT:RADAR > 14 and SHIP:GROUNDSPEED > 10 {
         LOCK STEERING TO SHIP:SRFRETROGRADE.
     } ELSE {
         LOCK STEERING TO UP.
