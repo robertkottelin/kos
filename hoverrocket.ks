@@ -82,7 +82,7 @@ UNTIL SHIP:AVAILABLETHRUST < 0.9 {
     PRINT "Pitch Error: " + pitch_error.
     PRINT "Derivative Pitch: " + derivative_pitch.
     PRINT "Integral Pitch: " + integral_pitch.
-    PRINT "___________________________________________".
+    PRINT "____________________________________________".
     CLEARSCREEN.
 }
 
