@@ -16,7 +16,7 @@ gear off.
 
 
 // [ Ascent ]
-wait until ship:apoapsis > 10000.
+wait until ship:apoapsis > 200000.
 lock throttle to 0.
 rcs on.
 
