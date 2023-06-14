@@ -20,7 +20,7 @@ SET LAUNCH_LATITUDE TO SHIP:LATITUDE.
 PRINT "Launch Longitude:" + SHIP:LONGITUDE.
 PRINT "Launch Latitude:" + SHIP:LATITUDE. 
 
-LOCK THROTTLE TO 1. 
+LOCK THROTTLE TO 0.6. 
 STAGE.    
 LOCK STEERING TO UP.          
 
@@ -28,16 +28,40 @@ GEAR OFF.
 PRINT (SHIP:LIQUIDFUEL).
 
 WAIT UNTIL apoapsis > (TARGET_ALTITUDE + 5000). 
-rcs on.
+
 
 LOCK THROTTLE TO 0. 
 
 SET HOVER_ALTITUDE TO 70000.
 
-LOCK STEERING TO HEADING(90, 10). 
+LOCK STEERING TO HEADING(185, 35). 
 LOCK THROTTLE TO 1.
-WAIT 21. 
+WAIT 28. 
 LOCK THROTTLE TO 0.
+
+
+// SET targetLat TO -90.  // Latitude of South Pole
+// SET targetLon TO 0.  // Longitude of South Pole
+// SET targetRange TO 0.1.  // Range within which we consider the craft as "over" the South Pole
+
+// WAIT UNTIL TRAJECTORY:HASIMPACT {
+//     SET impactLat TO TRAJECTORY:IMPACTPOS:LAT.
+//     SET impactLon TO TRAJECTORY:IMPACTPOS:LNG.
+
+//     // Calculate the difference between current impact point and South Pole
+//     SET diffLat TO ABS(impactLat - targetLat).
+//     SET diffLon TO ABS(impactLon - targetLon).
+
+//     // If the impact point is within target range of the South Pole, exit the loop
+//     IF (diffLat < targetRange) AND (diffLon < targetRange) {
+//         BREAK.
+//     }
+
+//     // Otherwise, make adjustments to your course as necessary here
+
+//     WAIT 0.01.
+// }
+
 
 WAIT UNTIL ALT:RADAR > (TARGET_ALTITUDE). 
 PRINT "Entering PID loop for altitude hold.".
@@ -61,7 +85,7 @@ UNTIL (SHIP:LIQUIDFUEL/FUEL) < 0.70 {
     LOCK THROTTLE TO throttle_setting.
     SET error_prior_alt TO error_alt.
 
-    rcs on.
+    //rcs on.
     // Pitch PID
     LOCK STEERING TO UP.  
     
@@ -79,7 +103,7 @@ LOCK STEERING TO UP.
 UNTIL SHIP:airspeed < 10 AND ALT:RADAR < 50 {
     
     BRAKES ON.
-    rcs on.
+    // rcs on.
 
     // Calculate current acceleration at full throttle
     SET max_acc TO SHIP:MAXTHRUST / SHIP:MASS.
@@ -112,8 +136,8 @@ UNTIL SHIP:airspeed < 10 AND ALT:RADAR < 50 {
         GEAR OFF.
     }
 
-    IF SHIP:airspeed > 1400 and ALT:RADAR <= 40000 {
-        LOCK THROTTLE TO 0.1.
+    IF SHIP:airspeed > 1300 and ALT:RADAR <= 50000 {
+        LOCK THROTTLE TO 0.2.
     } 
 
     SET t0 TO TIME:SECONDS.
