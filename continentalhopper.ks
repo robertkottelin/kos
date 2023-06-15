@@ -27,43 +27,47 @@ LOCK STEERING TO UP.
 GEAR OFF.
 PRINT (SHIP:LIQUIDFUEL).
 
-WAIT UNTIL apoapsis > (TARGET_ALTITUDE + 5000). 
-
-
+WAIT UNTIL apoapsis > (TARGET_ALTITUDE + 10000). 
+WAIT UNTIL ALT:RADAR > (TARGET_ALTITUDE). 
+PRINT "Approaching target apoapsis.".
 LOCK THROTTLE TO 0. 
 
 SET HOVER_ALTITUDE TO 70000.
 
 LOCK STEERING TO HEADING(185, 35). 
 LOCK THROTTLE TO 1.
-WAIT 28. 
+
+
+SET targetLat TO -90.  // Latitude of South Pole
+SET targetLon TO 0.  // Longitude of South Pole
+SET targetRange TO 0.1.  // Range within which we consider the craft as "over" the South Pole
+
+UNTIL addons:tr:HASIMPACT AND ((ABS(addons:tr:IMPACTPOS:LAT - targetLat) < targetRange) AND (ABS(addons:tr:IMPACTPOS:LNG - targetLon) < targetRange)) {
+    SET impactLat TO addons:tr:IMPACTPOS:LAT.
+    SET impactLon TO addons:tr:IMPACTPOS:LNG.
+
+    // Calculate the difference between current impact point and South Pole
+    SET diffLat TO ABS(impactLat - targetLat).
+    SET diffLon TO ABS(impactLon - targetLon).
+
+    // If the impact point is within target range of the South Pole, exit the loop
+    IF (diffLat < targetRange) AND (diffLon < targetRange) {
+        BREAK.
+    }
+
+    // Otherwise, make adjustments to your course as necessary here
+    lock throttle to 1.
+
+    LOCK STEERING TO HEADING(185, 35).
+
+    WAIT 0.01.
+}
+
+
+
 LOCK THROTTLE TO 0.
 
 
-// SET targetLat TO -90.  // Latitude of South Pole
-// SET targetLon TO 0.  // Longitude of South Pole
-// SET targetRange TO 0.1.  // Range within which we consider the craft as "over" the South Pole
-
-// WAIT UNTIL TRAJECTORY:HASIMPACT {
-//     SET impactLat TO TRAJECTORY:IMPACTPOS:LAT.
-//     SET impactLon TO TRAJECTORY:IMPACTPOS:LNG.
-
-//     // Calculate the difference between current impact point and South Pole
-//     SET diffLat TO ABS(impactLat - targetLat).
-//     SET diffLon TO ABS(impactLon - targetLon).
-
-//     // If the impact point is within target range of the South Pole, exit the loop
-//     IF (diffLat < targetRange) AND (diffLon < targetRange) {
-//         BREAK.
-//     }
-
-//     // Otherwise, make adjustments to your course as necessary here
-
-//     WAIT 0.01.
-// }
-
-
-WAIT UNTIL ALT:RADAR > (TARGET_ALTITUDE). 
 PRINT "Entering PID loop for altitude hold.".
 
 UNTIL (SHIP:LIQUIDFUEL/FUEL) < 0.70 { 
