@@ -42,7 +42,7 @@ PRINT "Trajectory placement in progress.".
 SET targetLat TO -90.  // Latitude of South Pole
 SET targetLon TO 0.  // Longitude of South Pole
 
-UNTIL addons:tr:IMPACTPOS:LAT < -74.3 {  
+UNTIL addons:tr:IMPACTPOS:LAT < -74.2 {  
     SET impactLat TO addons:tr:IMPACTPOS:LAT.
     SET impactLon TO addons:tr:IMPACTPOS:LNG.
     CLEARSCREEN.
@@ -56,7 +56,7 @@ UNTIL addons:tr:IMPACTPOS:LAT < -74.3 {
 
     // Otherwise, make adjustments to your course as necessary here
     lock throttle to 1.
-    LOCK STEERING TO HEADING(188, 0).
+    LOCK STEERING TO HEADING(187.2, 0).
 
     WAIT 0.01.
 }
@@ -69,7 +69,7 @@ LOCK THROTTLE TO 0.  // Cut engines for descent
 LOCK STEERING TO UP.
 
 // Main descent loop. Suicide burn.
-UNTIL SHIP:airspeed < 5 AND ALT:RADAR < 50 {
+UNTIL SHIP:airspeed < 2 AND ALT:RADAR < 50 {
     CLEARSCREEN.
     PRINT "___________________________________________".
     PRINT "Trajectory set. Preparing approach and suicide burn".
@@ -81,7 +81,7 @@ UNTIL SHIP:airspeed < 5 AND ALT:RADAR < 50 {
 
     // IF ALT RADAR THEN BRAKE
 
-    IF SHIP:LATITUDE < -55 {
+    IF SHIP:LATITUDE < -60 {
         BRAKES ON.
         PRINT "Brakes engaged.".
     } ELSE {
@@ -95,29 +95,38 @@ UNTIL SHIP:airspeed < 5 AND ALT:RADAR < 50 {
     PRINT "___________________________________________".
     PRINT "Suicide burn calculations:".
     PRINT "___________________________________________".
-    // Calculate current acceleration at full throttle
-    SET max_acc TO SHIP:MAXTHRUST / SHIP:MASS.
-    PRINT "Maximum Acceleration (max thrust / ship mass): " + max_acc.
-
 
     // Calculate gravity
     SET g TO 9.81.  // gravity at Kerbin surface, adjust as needed
 
+    // Calculate current acceleration at full throttle
+    SET max_acc TO SHIP:MAXTHRUST / SHIP:MASS.
+    PRINT "Maximum Acceleration (max thrust / ship mass): " + max_acc + " m/s^2".
+
     // Calculate initial speed
     SET v_0 TO SHIP:airspeed.
-    PRINT "Current speed: " + v_0.
+    PRINT "Current speed: " + v_0 + " m/s".
 
     // Calculate stopping time
     SET t_stop TO v_0 / (max_acc - g).
-    PRINT "Stopping Time (Initial Speed / (Max Acceleration - Gravity)): " + t_stop.
+    PRINT "Stopping Time (Initial Speed / (Max Acceleration - Gravity)): " + t_stop + " s".
 
     // Calculate stopping distance
     SET dist_stop TO (v_0^2) / (2*(max_acc - g)).
-    PRINT "Stopping Distance (Initial Speed^2 / (2 * (Max Acceleration - Gravity))): " + dist_stop.
+    PRINT "Stopping Distance (Initial Speed^2 / (2 * (Max Acceleration - Gravity))): " + dist_stop + " m".
 
-    IF ALT:RADAR <= (dist_stop + 12) {  // start burn at calculated altitude + safety buffer
+    IF ALT:RADAR <= (dist_stop + 10) {  // start burn at calculated altitude + safety buffer
         LOCK THROTTLE TO 1.  // Full throttle for hoverslam
         PRINT "Suicide burn initiated.".
+        IF ALT:RADAR > 22 {
+            LOCK STEERING TO SHIP:SRFRETROGRADE.
+        } ELSE {
+            LOCK STEERING TO UP.
+            IF ALT:RADAR < 9 {
+                LOCK THROTTLE TO 0.
+            }
+            // TODO: PID loop for entering hovering before touchdown?
+        }
     } ELSE {
         LOCK THROTTLE TO 0.
     }
@@ -129,23 +138,15 @@ UNTIL SHIP:airspeed < 5 AND ALT:RADAR < 50 {
         GEAR OFF.
     }
 
-    IF SHIP:airspeed > 1500 and ALT:RADAR <= 35000 {
-        LOCK THROTTLE TO 0.3.
+    IF SHIP:airspeed > 1500 and ALT:RADAR <= 40000 {
+        LOCK THROTTLE TO 0.4.
         PRINT "Hull temperature too hot, reducing entry speed.".
     } ELSE {
         PRINT "Hull temperature ok.".
 
     }
 
-    IF ALT:RADAR > 15 {
-        LOCK STEERING TO SHIP:SRFRETROGRADE.
-    } ELSE {
-        LOCK STEERING TO UP.
-        IF ALT:RADAR < 12 and SHIP:GROUNDSPEED < 12 {
-            LOCK THROTTLE TO 0.
-        }
-        // TODO: PID loop for entering hovering before touchdown?
-    }
+
 
     SET t0 TO TIME:SECONDS.
     WAIT 0.01.
