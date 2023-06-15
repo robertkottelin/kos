@@ -1,153 +1,147 @@
-SET TARGET_ALTITUDE TO 70000.
-SET FUEL TO 19440.
+SET TARGET_ALTITUDE TO 50000.
 
-// Altitude PID Constants
-SET KP_A TO 0.1. 
-SET KI_A TO 0.01.  
-SET KD_A TO 0.2.
-
-// Initialize error terms
-SET error_prior_alt TO 0.
-SET integral_alt TO 0.
-
-
-// Initialize the time
 SET t0 TO TIME:SECONDS.
 
 SET LAUNCH_LONGITUDE TO SHIP:LONGITUDE.
 SET LAUNCH_LATITUDE TO SHIP:LATITUDE.
+CLEARSCREEN.
 
 PRINT "Launch Longitude:" + SHIP:LONGITUDE.
 PRINT "Launch Latitude:" + SHIP:LATITUDE. 
+PRINT "Mission goal: Ascent to +" + TARGET_ALTITUDE + "m and land on the beach of the south pole arctic.".
+PRINT "Ship's Liquid Fuel: " + SHIP:LIQUIDFUEL.
+PRINT "Checking vehicle status...".
+// WAIT 2.
+PRINT "Checks complete, starting takeoff".
 
 LOCK THROTTLE TO 0.6. 
-STAGE.    
-LOCK STEERING TO UP.          
+STAGE.
+PRINT "Ascent started.".    
+LOCK STEERING TO HEADING(185, 90). 
 
 GEAR OFF.
-PRINT (SHIP:LIQUIDFUEL).
+WAIT UNTIL ALT:RADAR > 2000.
+LOCK STEERING TO HEADING(185, 80). 
+LOCK THROTTLE TO 0.5. 
+WAIT UNTIL ALT:RADAR > 10000.
+LOCK STEERING TO HEADING(185, 70). 
+WAIT UNTIL ALT:RADAR > 15000.
+LOCK STEERING TO HEADING(185, 60). 
+WAIT UNTIL ALT:RADAR > 20000.
+LOCK STEERING TO HEADING(185, 45). 
 
 WAIT UNTIL apoapsis > (TARGET_ALTITUDE + 10000). 
-WAIT UNTIL ALT:RADAR > (TARGET_ALTITUDE). 
 PRINT "Approaching target apoapsis.".
-LOCK THROTTLE TO 0. 
+LOCK THROTTLE TO 0.1. 
+WAIT UNTIL ALT:RADAR > (TARGET_ALTITUDE). 
 
-SET HOVER_ALTITUDE TO 70000.
-
-LOCK STEERING TO HEADING(185, 35). 
+LOCK STEERING TO HEADING(185, 0). 
 LOCK THROTTLE TO 1.
-
+PRINT "Trajectory placement in progress.".
 
 SET targetLat TO -90.  // Latitude of South Pole
 SET targetLon TO 0.  // Longitude of South Pole
-SET targetRange TO 0.1.  // Range within which we consider the craft as "over" the South Pole
 
-UNTIL addons:tr:HASIMPACT AND ((ABS(addons:tr:IMPACTPOS:LAT - targetLat) < targetRange) AND (ABS(addons:tr:IMPACTPOS:LNG - targetLon) < targetRange)) {
+UNTIL addons:tr:IMPACTPOS:LAT < -75 {  
     SET impactLat TO addons:tr:IMPACTPOS:LAT.
     SET impactLon TO addons:tr:IMPACTPOS:LNG.
+    CLEARSCREEN.
+    PRINT "___________________________________________".
+    PRINT "Trajectory placement in progress.".
+    PRINT "Impact Latitude: " + impactLat.
+    PRINT "Impact Longitude: " + impactLon.
+    PRINT "Ship's Liquid Fuel: " + SHIP:LIQUIDFUEL.
+    PRINT "Altitude: " + ALT:RADAR.
 
-    // Calculate the difference between current impact point and South Pole
-    SET diffLat TO ABS(impactLat - targetLat).
-    SET diffLon TO ABS(impactLon - targetLon).
-
-    // If the impact point is within target range of the South Pole, exit the loop
-    IF (diffLat < targetRange) AND (diffLon < targetRange) {
-        BREAK.
-    }
 
     // Otherwise, make adjustments to your course as necessary here
     lock throttle to 1.
-
-    LOCK STEERING TO HEADING(185, 35).
+    LOCK STEERING TO HEADING(188, 0).
 
     WAIT 0.01.
 }
-
-
 
 LOCK THROTTLE TO 0.
 
-
-PRINT "Entering PID loop for altitude hold.".
-
-UNTIL (SHIP:LIQUIDFUEL/FUEL) < 0.70 { 
-    SET dt TO TIME:SECONDS - t0.
-    
-    // Altitude PID
-    SET error_alt TO HOVER_ALTITUDE - ALT:RADAR.
-    SET derivative_alt TO (error_alt - error_prior_alt) / dt.
-    SET throttle_setting TO KP_A * error_alt + KI_A * integral_alt + KD_A * derivative_alt.
-    SET throttle_setting TO MAX(0, MIN(1, throttle_setting)).
-    
-    // Only accumulate error if throttle isn't at min/max to prevent integral windup
-    IF throttle_setting < 1 AND throttle_setting > 0 {
-        SET integral_alt TO integral_alt + error_alt * dt.
-    } ELSE {
-        SET integral_alt TO 0.
-    }
-    
-    LOCK THROTTLE TO throttle_setting.
-    SET error_prior_alt TO error_alt.
-
-    //rcs on.
-    // Pitch PID
-    LOCK STEERING TO UP.  
-    
-    SET t0 TO TIME:SECONDS.
-    WAIT 0.01.
-    PRINT "Remaining fuel:" + (SHIP:LIQUIDFUEL/FUEL).
-}
-
-PRINT "Starting descent.".
+WAIT UNTIL SHIP:LONGITUDE < -60.
 
 LOCK THROTTLE TO 0.  // Cut engines for descent
 LOCK STEERING TO UP.
 
 // Main descent loop. Suicide burn.
-UNTIL SHIP:airspeed < 10 AND ALT:RADAR < 50 {
-    
-    BRAKES ON.
+UNTIL SHIP:airspeed < 5 AND ALT:RADAR < 50 {
+    CLEARSCREEN.
+    PRINT "___________________________________________".
+    PRINT "Trajectory set. Descending.".
+    PRINT "Landing Longitude:" + SHIP:LONGITUDE.
+    PRINT "Landing Latitude:" + SHIP:LATITUDE. 
+    PRINT "Ship's Liquid Fuel: " + SHIP:LIQUIDFUEL.
+    PRINT "Ship Altitude: " + ALT:RADAR.
+
+    // IF ALT RADAR THEN BRAKE
+
+    IF SHIP:LATITUDE < -60 {
+        BRAKES ON.
+        PRINT "Brakes engaged.".
+    } ELSE {
+        BRAKES OFF.
+    }
     // rcs on.
 
     // Calculate current acceleration at full throttle
     SET max_acc TO SHIP:MAXTHRUST / SHIP:MASS.
+    PRINT "Maximum Acceleration (max thrust / ship mass): " + max_acc.
+
 
     // Calculate gravity
     SET g TO 9.81.  // gravity at Kerbin surface, adjust as needed
 
     // Calculate initial speed
     SET v_0 TO SHIP:airspeed.
+    PRINT "Current speed: " + v_0.
 
-    // Calculate stopping time and distance
+    // Calculate stopping time
     SET t_stop TO v_0 / (max_acc - g).
-    SET dist_stop TO (v_0^2) / (2*(max_acc - g)).
+    PRINT "Stopping Time (Initial Speed / (Max Acceleration - Gravity)): " + t_stop.
 
-    IF ALT:RADAR <= (dist_stop + 10) {  // start burn at calculated altitude + safety buffer
+    // Calculate stopping distance
+    SET dist_stop TO (v_0^2) / (2*(max_acc - g)).
+    PRINT "Stopping Distance (Initial Speed^2 / (2 * (Max Acceleration - Gravity))): " + dist_stop.
+
+    IF ALT:RADAR <= (dist_stop + 16) {  // start burn at calculated altitude + safety buffer
         LOCK THROTTLE TO 1.  // Full throttle for hoverslam
+        PRINT "Suicide burn initiated.".
     } ELSE {
         LOCK THROTTLE TO 0.
     }
     
-    IF ALT:RADAR > 14 and SHIP:GROUNDSPEED > 10 {
+    IF ALT:RADAR > 17 and SHIP:GROUNDSPEED > 15 {
         LOCK STEERING TO SHIP:SRFRETROGRADE.
     } ELSE {
         LOCK STEERING TO UP.
+        IF ALT:RADAR < 10 and SHIP:GROUNDSPEED < 10 {
+            LOCK THROTTLE TO 0.
+        }
     }
 
     IF ALT:RADAR < 1300 {
         GEAR ON.
+        PRINT "Landing gear deployed and locked.".
     } ELSE {
         GEAR OFF.
     }
 
-    IF SHIP:airspeed > 1300 and ALT:RADAR <= 50000 {
+    IF SHIP:airspeed > 1400 and ALT:RADAR <= 35000 {
         LOCK THROTTLE TO 0.2.
+        PRINT "Hull temperature too hot, reducing entry speed.".
     } 
 
     SET t0 TO TIME:SECONDS.
     WAIT 0.01.
 }
 
-PRINT "Fuel exhausted. Cut-off.".
-LOCK THROTTLE TO 0.  // Cut-off the engine
-GEAR ON.             // Deploy landing gear
+PRINT "Descent successfull.".
+PRINT "Cutting engines.".
+LOCK THROTTLE TO 0.
+GEAR ON.             
+PRINT "Mission accomplished!".
