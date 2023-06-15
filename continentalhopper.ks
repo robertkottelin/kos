@@ -42,7 +42,7 @@ PRINT "Trajectory placement in progress.".
 SET targetLat TO -90.  // Latitude of South Pole
 SET targetLon TO 0.  // Longitude of South Pole
 
-UNTIL addons:tr:IMPACTPOS:LAT < -74.5 {  
+UNTIL addons:tr:IMPACTPOS:LAT < -74.3 {  
     SET impactLat TO addons:tr:IMPACTPOS:LAT.
     SET impactLon TO addons:tr:IMPACTPOS:LNG.
     CLEARSCREEN.
@@ -77,14 +77,17 @@ UNTIL SHIP:airspeed < 5 AND ALT:RADAR < 50 {
     PRINT "Landing Latitude:" + SHIP:LATITUDE. 
     PRINT "Ship's Liquid Fuel: " + SHIP:LIQUIDFUEL.
     PRINT "Ship Altitude: " + ALT:RADAR.
+    PRINT "Engines signal nominal".
 
     // IF ALT RADAR THEN BRAKE
 
-    IF SHIP:LATITUDE < -60 {
+    IF SHIP:LATITUDE < -55 {
         BRAKES ON.
         PRINT "Brakes engaged.".
     } ELSE {
         BRAKES OFF.
+        PRINT "Brakes disengaged.".
+
     }
     // rcs on.
 
@@ -112,20 +115,11 @@ UNTIL SHIP:airspeed < 5 AND ALT:RADAR < 50 {
     SET dist_stop TO (v_0^2) / (2*(max_acc - g)).
     PRINT "Stopping Distance (Initial Speed^2 / (2 * (Max Acceleration - Gravity))): " + dist_stop.
 
-    IF ALT:RADAR <= (dist_stop + 13) {  // start burn at calculated altitude + safety buffer
+    IF ALT:RADAR <= (dist_stop + 12) {  // start burn at calculated altitude + safety buffer
         LOCK THROTTLE TO 1.  // Full throttle for hoverslam
         PRINT "Suicide burn initiated.".
     } ELSE {
         LOCK THROTTLE TO 0.
-    }
-    
-    IF ALT:RADAR > 15 {
-        LOCK STEERING TO SHIP:SRFRETROGRADE.
-    } ELSE {
-        LOCK STEERING TO UP.
-        IF ALT:RADAR < 10 and SHIP:GROUNDSPEED < 10 {
-            LOCK THROTTLE TO 0.
-        }
     }
 
     IF ALT:RADAR < 1300 {
@@ -135,12 +129,22 @@ UNTIL SHIP:airspeed < 5 AND ALT:RADAR < 50 {
         GEAR OFF.
     }
 
-    IF SHIP:airspeed > 1400 and ALT:RADAR <= 35000 {
+    IF SHIP:airspeed > 1500 and ALT:RADAR <= 35000 {
         LOCK THROTTLE TO 0.3.
         PRINT "Hull temperature too hot, reducing entry speed.".
     } ELSE {
         PRINT "Hull temperature ok.".
 
+    }
+
+    IF ALT:RADAR > 15 {
+        LOCK STEERING TO SHIP:SRFRETROGRADE.
+    } ELSE {
+        LOCK STEERING TO UP.
+        IF ALT:RADAR < 12 and SHIP:GROUNDSPEED < 12 {
+            LOCK THROTTLE TO 0.
+        }
+        // TODO: PID loop for entering hovering before touchdown?
     }
 
     SET t0 TO TIME:SECONDS.
@@ -150,5 +154,4 @@ UNTIL SHIP:airspeed < 5 AND ALT:RADAR < 50 {
 PRINT "Descent successfull.".
 PRINT "Cutting engines.".
 LOCK THROTTLE TO 0.
-GEAR ON.             
 PRINT "Mission accomplished!".
