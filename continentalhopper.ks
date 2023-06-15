@@ -42,7 +42,7 @@ PRINT "Trajectory placement in progress.".
 SET targetLat TO -90.  // Latitude of South Pole
 SET targetLon TO 0.  // Longitude of South Pole
 
-UNTIL addons:tr:IMPACTPOS:LAT < -75 {  
+UNTIL addons:tr:IMPACTPOS:LAT < -74.5 {  
     SET impactLat TO addons:tr:IMPACTPOS:LAT.
     SET impactLon TO addons:tr:IMPACTPOS:LNG.
     CLEARSCREEN.
@@ -72,7 +72,7 @@ LOCK STEERING TO UP.
 UNTIL SHIP:airspeed < 5 AND ALT:RADAR < 50 {
     CLEARSCREEN.
     PRINT "___________________________________________".
-    PRINT "Trajectory set. Descending.".
+    PRINT "Trajectory set. Preparing approach and suicide burn".
     PRINT "Landing Longitude:" + SHIP:LONGITUDE.
     PRINT "Landing Latitude:" + SHIP:LATITUDE. 
     PRINT "Ship's Liquid Fuel: " + SHIP:LIQUIDFUEL.
@@ -88,6 +88,10 @@ UNTIL SHIP:airspeed < 5 AND ALT:RADAR < 50 {
     }
     // rcs on.
 
+    PRINT "___________________________________________".
+    PRINT "___________________________________________".
+    PRINT "Suicide burn calculations:".
+    PRINT "___________________________________________".
     // Calculate current acceleration at full throttle
     SET max_acc TO SHIP:MAXTHRUST / SHIP:MASS.
     PRINT "Maximum Acceleration (max thrust / ship mass): " + max_acc.
@@ -108,14 +112,14 @@ UNTIL SHIP:airspeed < 5 AND ALT:RADAR < 50 {
     SET dist_stop TO (v_0^2) / (2*(max_acc - g)).
     PRINT "Stopping Distance (Initial Speed^2 / (2 * (Max Acceleration - Gravity))): " + dist_stop.
 
-    IF ALT:RADAR <= (dist_stop + 16) {  // start burn at calculated altitude + safety buffer
+    IF ALT:RADAR <= (dist_stop + 13) {  // start burn at calculated altitude + safety buffer
         LOCK THROTTLE TO 1.  // Full throttle for hoverslam
         PRINT "Suicide burn initiated.".
     } ELSE {
         LOCK THROTTLE TO 0.
     }
     
-    IF ALT:RADAR > 17 and SHIP:GROUNDSPEED > 15 {
+    IF ALT:RADAR > 15 {
         LOCK STEERING TO SHIP:SRFRETROGRADE.
     } ELSE {
         LOCK STEERING TO UP.
@@ -132,9 +136,12 @@ UNTIL SHIP:airspeed < 5 AND ALT:RADAR < 50 {
     }
 
     IF SHIP:airspeed > 1400 and ALT:RADAR <= 35000 {
-        LOCK THROTTLE TO 0.2.
+        LOCK THROTTLE TO 0.3.
         PRINT "Hull temperature too hot, reducing entry speed.".
-    } 
+    } ELSE {
+        PRINT "Hull temperature ok.".
+
+    }
 
     SET t0 TO TIME:SECONDS.
     WAIT 0.01.
