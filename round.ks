@@ -1,5 +1,5 @@
 // Basic plane takeoff, circling and landing script
-SET CRUISE_ALTITUDE TO 8000.  // Adjust this value based on your aircraft and terrain
+SET CRUISE_ALTITUDE TO 12000.  // Adjust this value based on your aircraft and terrain
 SET TAKEOFF_SPEED TO 150.        // Speed at which the plane will take off
 SET LANDING_SPEED TO 70.        // Speed at which the plane will land
 SET RUNWAY_HEADING TO 90.       // Heading of the runway, adjust as needed
