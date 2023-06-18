@@ -1,4 +1,4 @@
-SET TARGET_ALTITUDE TO 2000.
+SET TARGET_ALTITUDE TO 20000.
 
 SET t0 TO TIME:SECONDS.
 
@@ -25,9 +25,8 @@ WAIT UNTIL ALT:RADAR > (TARGET_ALTITUDE - 1000).
 
 LOCK THROTTLE TO 0.
 
-
 // Main descent loop. Suicide burn.
-UNTIL SHIP:airspeed < 10 {
+UNTIL SHIP:airspeed < 10 and ALT:RADAR < 1000{
     CLEARSCREEN.
     PRINT "___________________________________________".
     PRINT "Trajectory set. Preparing approach and suicide burn".
@@ -94,96 +93,30 @@ UNTIL SHIP:airspeed < 10 {
     SET t0 TO TIME:SECONDS.
     WAIT 0.01.
 }
-GEAR ON.
 
-SET TARGET_ALTITUDE TO 40.
-SET TARGET_SPEED TO -45.
+SET Kp TO 0.1.  // Proportional constant
+SET Ki TO 0.01.  // Integral constant
+SET Kd TO 0.2.  // Derivative constant
 
-// Altitude PID Constants
-SET KP_A TO 0.1.
-SET KI_A TO 0.01.
-SET KD_A TO 0.2.
+SET target_speed TO -2.  // Target vertical speed in m/s
 
-// Pitch PID Constants
-SET KP_P TO 0.1.
-SET KI_P TO 0.01.
-SET KD_P TO 0.2.
+SET integral TO 0.  // Integral part of the error
+SET last_error TO 0.  // Error from the last run of the loop
 
-// Speed PID Constants
-SET KP_S TO 0.1.
-SET KI_S TO 0.01.
-SET KD_S TO 0.2.
+LOCK throttle TO 1.  // Start at full throttle
 
-// Initialize error terms
-SET error_prior_alt TO 0.
-SET integral_alt TO 0.
-SET error_prior_pitch TO 0.
-SET integral_pitch TO 0.
-SET error_prior_speed TO 0.
-SET integral_speed TO 0.
+UNTIL ALT:RADAR < 5 {  // End condition
+    SET error TO target_speed - SHIP:VERTICALSPEED.
+    SET derivative TO error - last_error.
+    SET integral TO integral + error.
 
-UNTIL SHIP:AVAILABLETHRUST < 0.9 {
-    SET dt TO TIME:SECONDS - t0.
-    // Speed PID
-    SET error_speed TO TARGET_SPEED - SHIP:VERTICALSPEED.
-    SET derivative_speed TO (error_speed - error_prior_speed) / dt.
-    SET throttle_setting TO KP_S * error_speed + KI_S * integral_speed + KD_S * derivative_speed.
-    SET throttle_setting TO MAX(0, MIN(1, throttle_setting)).
-
-    // Only accumulate error if throttle isn't at min/max to prevent integral windup
-    IF throttle_setting < 1 AND throttle_setting > 0 {
-        SET integral_speed TO integral_speed + error_speed * dt.
-    } ELSE {
-        SET integral_speed TO 0.
-    }
+    LOCK throttle TO 0.1 + Kp * error + Ki * integral + Kd * derivative.
     
-    // Pitch PID
-    SET pitch_error TO VECTORANGLE(UP:FOREVECTOR, FACING:FOREVECTOR).
-    SET derivative_pitch TO (pitch_error - error_prior_pitch) / dt.
-    SET pitch_adjust TO KP_P * pitch_error + KI_P * integral_pitch + KD_P * derivative_pitch.
-    SET pitch_adjust TO MAX(-1, MIN(1, pitch_adjust)).
+    WAIT 0.01.  // Wait a small amount of time before next loop iteration
 
-    IF ABS(pitch_adjust) < 0.9 {
-        SET integral_pitch TO integral_pitch + pitch_error * dt.
-    } ELSE {
-        SET integral_pitch TO 0.
-    }
-
-
-    LOCK THROTTLE TO throttle_setting.
-    LOCK STEERING TO UP + R(0, pitch_adjust, 0).
-    SET error_prior_speed TO error_speed.
-    SET error_prior_pitch TO pitch_error.
-
-    SET t0 TO TIME:SECONDS.
-    WAIT 0.01.
-
-    PRINT "___________________________________________".
-    PRINT "PID loop for thrust control:".
-    PRINT "___________________________________________".
-    PRINT "Altitude PID Variables:".
-    PRINT "Throttle Setting: " + throttle_setting.
-    PRINT "Altitude Error: " + error_speed.
-    PRINT "Derivative Altitude: " + derivative_speed.
-    PRINT "Integral Altitude: " + integral_speed.
-    PRINT "Altitude: " + ALT:RADAR.
-    PRINT "Target Altitude: " + TARGET_ALTITUDE.
-    PRINT "Time: " + dt.
-    PRINT "Fuel: " + SHIP:AVAILABLETHRUST.
-    PRINT "___________________________________________".
-    PRINT "PID loop for gimball control:".
-    PRINT "___________________________________________".
-    PRINT "Pitch PID Variables:".
-    PRINT "Pitch Adjust: " + pitch_adjust.
-    PRINT "Pitch Error: " + pitch_error.
-    PRINT "Derivative Pitch: " + derivative_pitch.
-    PRINT "Integral Pitch: " + integral_pitch.
-    PRINT "____________________________________________".
-    CLEARSCREEN.
+    SET last_error TO error.  // Update last error
+    // Steerin up
+    LOCK STEERING TO UP.
 }
 
-
-PRINT "Descent successfull.".
-PRINT "Cutting engines.".
-LOCK THROTTLE TO 0.
-PRINT "Mission accomplished!".
+LOCK throttle TO 0.  // Cut throttle when altitude is below 100
